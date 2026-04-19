@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { Availability, MatchResult, Profile, Screen } from "./types";
 import { MOCK_PLAYERS } from "./constants";
 import { computeMatchScore } from "./utils";
 import ProfileScreen from "./components/screens/ProfileScreen";
@@ -6,35 +7,39 @@ import AvailabilityScreen from "./components/screens/AvailabilityScreen";
 import MatchesScreen from "./components/screens/MatchesScreen";
 import ChallengeScreen from "./components/screens/ChallengeScreen";
 
-const NAV_ITEMS = [
+interface HoverCell { d: number; s: number }
+
+interface NavItem { key: Screen; label: string }
+
+const NAV_ITEMS: NavItem[] = [
   { key: "profile", label: "PROFIL" },
   { key: "availability", label: "DISPO" },
   { key: "matches", label: "MATCHS" },
 ];
 
 export default function App() {
-  const [screen, setScreen] = useState("profile");
-  const [profile, setProfile] = useState({ name: "", rank: "Recrue", gameTypes: [] });
-  const [availability, setAvailability] = useState({});
-  const [matches, setMatches] = useState([]);
-  const [challenged, setChallenged] = useState(null);
-  const [toast, setToast] = useState(null);
-  const [hoverCell, setHoverCell] = useState(null);
+  const [screen, setScreen] = useState<Screen>("profile");
+  const [profile, setProfile] = useState<Profile>({ name: "", rank: "Recrue", gameTypes: [] });
+  const [availability, setAvailability] = useState<Availability>({});
+  const [matches, setMatches] = useState<MatchResult[]>([]);
+  const [challenged, setChallenged] = useState<MatchResult | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [hoverCell, setHoverCell] = useState<HoverCell | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   // dragValue locks the intended action (add or remove) for the whole drag gesture,
   // so moving over already-toggled cells mid-drag doesn't flip them back.
-  const [dragValue, setDragValue] = useState(null);
+  const [dragValue, setDragValue] = useState<boolean | undefined>(undefined);
 
-  const showToast = (msg) => {
+  const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
   };
 
   // forceVal is passed during drag so all cells in a gesture follow the same
   // add/remove intent decided on mousedown. Without it a single click just toggles.
-  const toggleSlot = (day, slot, forceVal) => {
+  const toggleSlot = (day: number, slot: number, forceVal?: boolean) => {
     setAvailability(prev => {
-      const daySlots = prev[day] ? [...prev[day]] : [];
+      const daySlots = prev[day] ? [...prev[day]!] : [];
       const idx = daySlots.indexOf(slot);
       const shouldAdd = forceVal !== undefined ? forceVal : idx === -1;
       if (shouldAdd && idx === -1) daySlots.push(slot);
@@ -48,14 +53,14 @@ export default function App() {
     });
   };
 
-  const handleMouseDown = (day, slot) => {
+  const handleMouseDown = (day: number, slot: number) => {
     const active = availability[day]?.includes(slot);
     setIsDragging(true);
     setDragValue(!active);
     toggleSlot(day, slot, !active);
   };
 
-  const handleMouseEnter = (day, slot) => {
+  const handleMouseEnter = (day: number, slot: number) => {
     if (isDragging) toggleSlot(day, slot, dragValue);
   };
 
@@ -68,14 +73,14 @@ export default function App() {
   }, []);
 
   const findMatches = () => {
-    const scored = MOCK_PLAYERS
+    const scored: MatchResult[] = MOCK_PLAYERS
       .map(p => ({ ...p, ...computeMatchScore(availability, profile.gameTypes, p) }))
       .sort((a, b) => b.score - a.score);
     setMatches(scored);
     setScreen("matches");
   };
 
-  const totalSlots = Object.values(availability).reduce((s, v) => s + v.length, 0);
+  const totalSlots = Object.values(availability).reduce((s, v) => s + (v?.length ?? 0), 0);
 
   return (
     <div style={{

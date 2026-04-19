@@ -1,14 +1,33 @@
+import type { Dispatch, SetStateAction } from "react";
+import type { Availability } from "../../types";
 import { DAYS, FULL_DAYS, TIME_SLOTS } from "../../constants";
 import { thStyle } from "../../styles";
 import SectionTitle from "../ui/SectionTitle";
 import ActionButton from "../ui/ActionButton";
+
+interface HoverCell {
+  d: number;
+  s: number;
+}
+
+interface Props {
+  availability: Availability;
+  totalSlots: number;
+  handleMouseDown: (day: number, slot: number) => void;
+  handleMouseEnter: (day: number, slot: number) => void;
+  hoverCell: HoverCell | null;
+  setHoverCell: Dispatch<SetStateAction<HoverCell | null>>;
+  showToast: (msg: string) => void;
+  onBack: () => void;
+  onFindMatches: () => void;
+}
 
 export default function AvailabilityScreen({
   availability, totalSlots,
   handleMouseDown, handleMouseEnter,
   hoverCell, setHoverCell,
   showToast, onBack, onFindMatches,
-}) {
+}: Props) {
   return (
     <div style={{ animation: "fadeIn 0.3s ease" }}>
       <SectionTitle>FENÊTRES TACTIQUES DISPONIBLES</SectionTitle>
@@ -25,7 +44,7 @@ export default function AvailabilityScreen({
                 <th key={d} style={{ ...thStyle, textAlign: "center" }}>
                   <div>{d}</div>
                   <div style={{ fontSize: 9, color: "#3a3a2a", fontWeight: "normal" }}>
-                    {availability[i]?.length || 0}
+                    {availability[i]?.length ?? 0}
                   </div>
                 </th>
               ))}
@@ -75,7 +94,7 @@ export default function AvailabilityScreen({
 
       <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
         {FULL_DAYS.map((d, i) => {
-          const count = availability[i]?.length || 0;
+          const count = availability[i]?.length ?? 0;
           return (
             <div key={d} style={{
               padding: "6px 12px",

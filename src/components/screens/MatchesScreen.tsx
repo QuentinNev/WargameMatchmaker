@@ -1,9 +1,17 @@
+import type { MatchResult, Profile } from "../../types";
 import { GAME_TYPES } from "../../constants";
 import SectionTitle from "../ui/SectionTitle";
 import ScoreBadge from "../ui/ScoreBadge";
 import ActionButton from "../ui/ActionButton";
 
-export default function MatchesScreen({ matches, profile, onChallenge, onBack }) {
+interface Props {
+  matches: MatchResult[];
+  profile: Profile;
+  onChallenge: (player: MatchResult) => void;
+  onBack: () => void;
+}
+
+export default function MatchesScreen({ matches, profile, onChallenge, onBack }: Props) {
   return (
     <div style={{ animation: "fadeIn 0.3s ease" }}>
       <SectionTitle>ADVERSAIRES IDENTIFIÉS</SectionTitle>

@@ -1,8 +1,21 @@
+import type { Availability, GameTypeId, Player } from "./types";
+
+interface ScoreResult {
+  overlap: number;
+  gameOverlap: number;
+  score: number;
+}
+
 // Computes a compatibility score between the current user and a candidate player.
 // Iterates over the user's days only — no point checking days neither side filled in.
-export function computeMatchScore(myAvail, myGames, player) {
+export function computeMatchScore(
+  myAvail: Availability,
+  myGames: GameTypeId[],
+  player: Player,
+): ScoreResult {
   let overlap = 0;
-  for (const day in myAvail) {
+  for (const dayStr in myAvail) {
+    const day = Number(dayStr);
     if (player.availability[day]) {
       // Convert to Set so each slot lookup is O(1) instead of O(n)
       const mySlots = new Set(myAvail[day]);

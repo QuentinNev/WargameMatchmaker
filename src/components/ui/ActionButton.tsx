@@ -1,4 +1,12 @@
-export default function ActionButton({ children, onClick, secondary }) {
+import type { ReactNode } from "react";
+
+interface Props {
+  children: ReactNode;
+  onClick?: () => void;
+  secondary?: boolean;
+}
+
+export default function ActionButton({ children, onClick, secondary }: Props) {
   return (
     <button onClick={onClick} style={{
       background: secondary ? "transparent" : "#c9a84c",

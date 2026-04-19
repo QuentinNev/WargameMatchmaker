@@ -1,9 +1,12 @@
-export const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
-export const FULL_DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+import type { GameType, Player } from "./types";
+
+export const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
+export const FULL_DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"] as const;
 export const TIME_SLOTS = [
   "08h-10h", "10h-12h", "12h-14h", "14h-16h", "16h-18h", "18h-20h", "20h-22h", "22h-00h",
-];
-export const GAME_TYPES = [
+] as const;
+
+export const GAME_TYPES: GameType[] = [
   { id: "ww2", label: "WW2", icon: "⚔️" },
   { id: "ancients", label: "Antiquité", icon: "🏛️" },
   { id: "scifi", label: "Sci-Fi", icon: "🚀" },
@@ -11,7 +14,8 @@ export const GAME_TYPES = [
   { id: "modern", label: "Moderne", icon: "🎯" },
   { id: "fantasy", label: "Fantasy", icon: "🐉" },
 ];
-export const MOCK_PLAYERS = [
+
+export const MOCK_PLAYERS: Player[] = [
   {
     id: 1, name: "Général Dupont", rank: "Maréchal", games: 47, wins: 31,
     gameTypes: ["ww2", "modern"], bio: "Spécialiste des batailles d'encerclement",
@@ -38,7 +42,8 @@ export const MOCK_PLAYERS = [
     availability: { 0: [3,4,5], 2: [4,5,6,7], 4: [2,3,4], 5: [3,4,5,6,7] },
   },
 ];
+
 export const RANKS = [
   "Recrue", "Caporal", "Sergent", "Lieutenant", "Capitaine",
   "Commandant", "Colonel", "Général", "Maréchal",
-];
+] as const;

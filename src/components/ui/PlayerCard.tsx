@@ -1,4 +1,10 @@
-export default function PlayerCard({ name, rank, you }) {
+interface Props {
+  name: string;
+  rank: string;
+  you?: boolean;
+}
+
+export default function PlayerCard({ name, rank, you }: Props) {
   return (
     <div style={{
       border: `1px solid ${you ? "#c9a84c" : "#2a2a1a"}`,

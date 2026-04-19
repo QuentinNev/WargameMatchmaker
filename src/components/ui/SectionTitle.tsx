@@ -1,4 +1,10 @@
-export default function SectionTitle({ children }) {
+import type { ReactNode } from "react";
+
+interface Props {
+  children: ReactNode;
+}
+
+export default function SectionTitle({ children }: Props) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
       <div style={{ width: 3, height: 20, background: "#c9a84c" }} />

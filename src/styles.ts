@@ -1,4 +1,6 @@
-export const inputStyle = {
+import type { CSSProperties } from "react";
+
+export const inputStyle: CSSProperties = {
   background: "#0d0f0a",
   border: "1px solid #1e1e12",
   color: "#c9b99a",
@@ -10,7 +12,7 @@ export const inputStyle = {
   letterSpacing: 1,
 };
 
-export const chipStyle = {
+export const chipStyle: CSSProperties = {
   padding: "5px 12px",
   cursor: "pointer",
   fontSize: 11,
@@ -19,7 +21,7 @@ export const chipStyle = {
   transition: "all 0.15s",
 };
 
-export const thStyle = {
+export const thStyle: CSSProperties = {
   fontSize: 10,
   letterSpacing: 2,
   color: "#4a4a3a",

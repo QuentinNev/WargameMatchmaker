@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { Availability, MatchResult, Profile } from "../../types";
 import { FULL_DAYS, TIME_SLOTS } from "../../constants";
 import { inputStyle } from "../../styles";
 import SectionTitle from "../ui/SectionTitle";
@@ -6,7 +7,16 @@ import Label from "../ui/Label";
 import ActionButton from "../ui/ActionButton";
 import PlayerCard from "../ui/PlayerCard";
 
-export default function ChallengeScreen({ challenged, profile, availability, showToast, onBack, onSent }) {
+interface Props {
+  challenged: MatchResult;
+  profile: Profile;
+  availability: Availability;
+  showToast: (msg: string) => void;
+  onBack: () => void;
+  onSent: () => void;
+}
+
+export default function ChallengeScreen({ challenged, profile, availability, showToast, onBack, onSent }: Props) {
   const [message, setMessage] = useState("");
 
   return (
@@ -26,8 +36,8 @@ export default function ChallengeScreen({ challenged, profile, availability, sho
           <div style={{ fontSize: 11, color: "#4a4a3a", letterSpacing: 2, marginBottom: 8 }}>CRÉNEAUX COMMUNS</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {FULL_DAYS.map((d, di) => {
-              const mine = new Set(availability[di] || []);
-              const theirs = new Set(challenged.availability[di] || []);
+              const mine = new Set(availability[di] ?? []);
+              const theirs = new Set(challenged.availability[di] ?? []);
               const common = [...mine].filter(s => theirs.has(s));
               if (common.length === 0) return null;
               return common.map(s => (

@@ -1,11 +1,19 @@
+import type { Dispatch, SetStateAction } from "react";
+import type { Profile } from "../../types";
 import { GAME_TYPES, RANKS } from "../../constants";
-import { chipStyle } from "../../styles";
+import { chipStyle, inputStyle } from "../../styles";
 import SectionTitle from "../ui/SectionTitle";
 import Label from "../ui/Label";
 import ActionButton from "../ui/ActionButton";
-import { inputStyle } from "../../styles";
 
-export default function ProfileScreen({ profile, setProfile, showToast, onNext }) {
+interface Props {
+  profile: Profile;
+  setProfile: Dispatch<SetStateAction<Profile>>;
+  showToast: (msg: string) => void;
+  onNext: () => void;
+}
+
+export default function ProfileScreen({ profile, setProfile, showToast, onNext }: Props) {
   return (
     <div style={{ animation: "fadeIn 0.3s ease" }}>
       <SectionTitle>IDENTIFICATION DU COMMANDANT</SectionTitle>
