@@ -1,4 +1,4 @@
-export type GameTypeId = "ww2" | "ancients" | "scifi" | "naval" | "modern" | "fantasy";
+export type GameTypeId = "40k" |"AoS";
 
 export type Screen = "profile" | "availability" | "matches" | "challenge";
 
