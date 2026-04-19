@@ -29,13 +29,17 @@ export default function AuthScreen({ onSendCode }: Props) {
     <div style={{ animation: "fadeIn 0.3s ease", maxWidth: 480, margin: "80px auto 0" }}>
       <SectionTitle>ACCÈS AU SYSTÈME</SectionTitle>
 
-      <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 20 }}>
+      <form
+        onSubmit={e => { e.preventDefault(); handleSubmit(); }}
+        style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 20 }}
+      >
         <div>
           <Label>PSEUDO DE COMMANDANT</Label>
           <input
+            name="username"
+            autoComplete="username"
             value={pseudo}
             onChange={e => setPseudo(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && handleSubmit()}
             placeholder="Ex: Général Moreau..."
             style={inputStyle}
             autoFocus
@@ -45,10 +49,11 @@ export default function AuthScreen({ onSendCode }: Props) {
         <div>
           <Label>EMAIL DE CONTACT</Label>
           <input
+            name="email"
             type="email"
+            autoComplete="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && handleSubmit()}
             placeholder="commandant@example.com"
             style={inputStyle}
             disabled={loading}
@@ -64,7 +69,7 @@ export default function AuthScreen({ onSendCode }: Props) {
             {loading ? "ENVOI…" : "ENVOYER LE CODE →"}
           </ActionButton>
         </div>
-      </div>
+      </form>
 
       <div style={{ marginTop: 48, fontSize: 10, color: "#2a2a1a", letterSpacing: 1, textAlign: "center" }}>
         Un code à usage unique sera envoyé à votre adresse email.
