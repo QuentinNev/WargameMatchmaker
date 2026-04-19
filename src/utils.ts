@@ -58,12 +58,26 @@ export function getWeekDates(weekStart: Date): Date[] {
   });
 }
 
-const SHORT_DAYS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"] as const;
-const SHORT_MONTHS = ["jan.", "fév.", "mar.", "avr.", "mai", "juin", "juil.", "août", "sep.", "oct.", "nov.", "déc."] as const;
-
-// Formats "2026-04-22" → "Mer 22 avr."
-export function formatDateKey(key: string): string {
-  // Append T12:00:00 to parse as local noon and avoid midnight DST edge cases.
+// Formats "2026-04-22" → locale-aware short date (e.g. "Wed 22 Apr" / "mer. 22 avr.").
+// Appends T12:00:00 to parse as local noon and avoid midnight DST edge cases.
+export function formatDateKey(key: string, locale = "fr-FR"): string {
   const d = new Date(`${key}T12:00:00`);
-  return `${SHORT_DAYS[d.getDay()]} ${d.getDate()} ${SHORT_MONTHS[d.getMonth()]}`;
+  return d.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" });
+}
+
+// Returns separate weekday and day+month strings for grid column headers.
+export function formatDayHeader(date: Date, locale = "fr-FR"): { weekday: string; dayMonth: string } {
+  const weekday = date.toLocaleDateString(locale, { weekday: "short" });
+  const dayMonth = date.toLocaleDateString(locale, { day: "numeric", month: "short" });
+  return { weekday, dayMonth };
+}
+
+// Formats a week range label, e.g. "22 avr. – 28 avr. 2026" / "Apr 22 – Apr 28, 2026".
+export function formatWeekRange(start: Date, end: Date, locale = "fr-FR"): string {
+  const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
+  const s = start.toLocaleDateString(locale, opts);
+  const e = end.toLocaleDateString(locale, opts);
+  return locale.startsWith("fr")
+    ? `${s} – ${e} ${end.getFullYear()}`
+    : `${s} – ${e}, ${end.getFullYear()}`;
 }

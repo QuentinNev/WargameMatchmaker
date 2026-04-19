@@ -1,9 +1,10 @@
 import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
+import { useTranslation } from "react-i18next";
 import type { Availability } from "../../types";
 import { TIME_SLOTS } from "../../constants";
 import { thStyle } from "../../styles";
-import { toDateKey, getWeekStart, getWeekDates, formatDateKey } from "../../utils";
+import { toDateKey, getWeekStart, getWeekDates, formatDateKey, formatDayHeader, formatWeekRange } from "../../utils";
 import SectionTitle from "../ui/SectionTitle";
 import ActionButton from "../ui/ActionButton";
 
@@ -21,23 +22,21 @@ interface Props {
   onFindMatches: () => void;
 }
 
-const SHORT_DAYS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"] as const;
-const SHORT_MONTHS = ["jan.", "fév.", "mar.", "avr.", "mai", "juin", "juil.", "août", "sep.", "oct.", "nov.", "déc."] as const;
-
 export default function AvailabilityScreen({
   availability, totalSlots,
   handleMouseDown, handleMouseEnter,
   hoverCell, setHoverCell,
   showToast, onBack, onFindMatches,
 }: Props) {
+  const { t, i18n } = useTranslation();
   const [weekOffset, setWeekOffset] = useState(0);
 
+  const locale = i18n.language === "fr" ? "fr-FR" : "en-US";
   const weekStart = getWeekStart(weekOffset);
   const weekDates = getWeekDates(weekStart);
   const today = toDateKey(new Date());
 
-  const weekEnd = weekDates[6];
-  const weekLabel = `${weekDates[0].getDate()} ${SHORT_MONTHS[weekDates[0].getMonth()]} – ${weekEnd.getDate()} ${SHORT_MONTHS[weekEnd.getMonth()]} ${weekEnd.getFullYear()}`;
+  const weekLabel = formatWeekRange(weekDates[0], weekDates[6], locale);
 
   // All selected dates across all weeks, sorted chronologically.
   const allSelectedDates = Object.entries(availability)
@@ -46,9 +45,9 @@ export default function AvailabilityScreen({
 
   return (
     <div style={{ animation: "fadeIn 0.3s ease" }}>
-      <SectionTitle>FENÊTRES TACTIQUES DISPONIBLES</SectionTitle>
+      <SectionTitle>{t("availability.title")}</SectionTitle>
       <div style={{ fontSize: 11, color: "#4a4a3a", letterSpacing: 2, marginBottom: 20 }}>
-        CLIQUEZ OU GLISSEZ POUR SÉLECTIONNER VOS CRÉNEAUX · {totalSlots} CRÉNEAU(X) SÉLECTIONNÉ(S)
+        {t("availability.hint")} · {t("availability.slotsSelected", { count: totalSlots })}
       </div>
 
       {/* Week navigation */}
@@ -80,16 +79,15 @@ export default function AvailabilityScreen({
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              <th style={{ ...thStyle, width: 90, textAlign: "left", paddingLeft: 8 }}>HEURE</th>
+              <th style={{ ...thStyle, width: 90, textAlign: "left", paddingLeft: 8 }}>{t("availability.timeHeader")}</th>
               {weekDates.map(date => {
                 const key = toDateKey(date);
                 const isPast = key < today;
+                const { weekday, dayMonth } = formatDayHeader(date, locale);
                 return (
                   <th key={key} style={{ ...thStyle, textAlign: "center", opacity: isPast ? 0.35 : 1 }}>
-                    <div>{SHORT_DAYS[date.getDay()]}</div>
-                    <div style={{ fontSize: 9, color: "#5a5a3a" }}>
-                      {date.getDate()} {SHORT_MONTHS[date.getMonth()]}
-                    </div>
+                    <div>{weekday}</div>
+                    <div style={{ fontSize: 9, color: "#5a5a3a" }}>{dayMonth}</div>
                     <div style={{ fontSize: 9, color: "#3a3a2a", fontWeight: "normal" }}>
                       {availability[key]?.length ?? 0}
                     </div>
@@ -151,7 +149,7 @@ export default function AvailabilityScreen({
       {allSelectedDates.length > 0 && (
         <div style={{ marginTop: 16 }}>
           <div style={{ fontSize: 10, color: "#3a3a2a", letterSpacing: 2, marginBottom: 8 }}>
-            DISPONIBILITÉS ENREGISTRÉES
+            {t("availability.savedDates")}
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {allSelectedDates.map(([dateKey, slots]) => (
@@ -160,7 +158,7 @@ export default function AvailabilityScreen({
                 border: "1px solid #2a2a1a",
                 fontSize: 10, color: "#8a7a5a", letterSpacing: 1,
               }}>
-                {formatDateKey(dateKey)}: <span style={{ color: "#c9a84c" }}>{slots?.length}</span>
+                {formatDateKey(dateKey, locale)}: <span style={{ color: "#c9a84c" }}>{slots?.length}</span>
               </div>
             ))}
           </div>
@@ -168,12 +166,12 @@ export default function AvailabilityScreen({
       )}
 
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 32 }}>
-        <ActionButton secondary onClick={onBack}>← PROFIL</ActionButton>
+        <ActionButton secondary onClick={onBack}>{t("availability.back")}</ActionButton>
         <ActionButton onClick={() => {
-          if (totalSlots === 0) { showToast("Sélectionnez au moins un créneau"); return; }
+          if (totalSlots === 0) { showToast(t("availability.errorNoSlots")); return; }
           onFindMatches();
         }}>
-          TROUVER DES ADVERSAIRES →
+          {t("availability.findMatches")}
         </ActionButton>
       </div>
     </div>

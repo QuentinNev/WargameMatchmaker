@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { MatchResult, Profile } from "../../types";
 import { GAME_TYPES } from "../../constants";
 import SectionTitle from "../ui/SectionTitle";
@@ -12,11 +13,13 @@ interface Props {
 }
 
 export default function MatchesScreen({ matches, profile, onChallenge, onBack }: Props) {
+  const { t } = useTranslation();
+
   return (
     <div style={{ animation: "fadeIn 0.3s ease" }}>
-      <SectionTitle>ADVERSAIRES IDENTIFIÉS</SectionTitle>
+      <SectionTitle>{t("matches.title")}</SectionTitle>
       <div style={{ fontSize: 11, color: "#4a4a3a", letterSpacing: 2, marginBottom: 24 }}>
-        {matches.length} COMMANDANT(S) LOCALISÉ(S) · TRI PAR COMPATIBILITÉ
+        {t("matches.subtitle", { count: matches.length })}
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -36,7 +39,7 @@ export default function MatchesScreen({ matches, profile, onChallenge, onBack }:
                   position: "absolute", top: -1, right: 16,
                   background: "#c9a84c", color: "#0a0c0e",
                   fontSize: 9, letterSpacing: 3, padding: "2px 10px", fontWeight: "bold",
-                }}>MEILLEURE COMPATIBILITÉ</div>
+                }}>{t("matches.bestMatch")}</div>
               )}
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -54,7 +57,7 @@ export default function MatchesScreen({ matches, profile, onChallenge, onBack }:
                       {p.name}
                     </div>
                     <div style={{ fontSize: 10, color: "#4a4a3a", letterSpacing: 2 }}>
-                      {p.rank} · {p.games} parties · {Math.round(p.wins / p.games * 100)}% victoires
+                      {t(`ranks.${p.rank}`, { defaultValue: p.rank })} · {p.games} {t("matches.games")} · {Math.round(p.wins / p.games * 100)}% {t("matches.wins")}
                     </div>
                     <div style={{ fontSize: 11, color: "#5a5a3a", marginTop: 4 }}>{p.bio}</div>
                   </div>
@@ -62,12 +65,12 @@ export default function MatchesScreen({ matches, profile, onChallenge, onBack }:
 
                 <div style={{ textAlign: "right" }}>
                   <div style={{ marginBottom: 8 }}>
-                    <ScoreBadge label="CRÉNEAUX" value={p.overlap} color="#4a8a4a" />
-                    <ScoreBadge label="JEUX" value={p.gameOverlap} color="#4a6a8a" />
+                    <ScoreBadge label={t("matches.slotsLabel")} value={p.overlap} color="#4a8a4a" />
+                    <ScoreBadge label={t("matches.gamesLabel")} value={p.gameOverlap} color="#4a6a8a" />
                   </div>
                   <div style={{ width: 140 }}>
                     <div style={{ fontSize: 9, color: "#3a3a2a", letterSpacing: 2, marginBottom: 3, textAlign: "right" }}>
-                      COMPATIBILITÉ
+                      {t("matches.compatibility")}
                     </div>
                     <div style={{ height: 4, background: "#1a1a0a", width: "100%" }}>
                       <div style={{
@@ -78,7 +81,7 @@ export default function MatchesScreen({ matches, profile, onChallenge, onBack }:
                       }} />
                     </div>
                     <div style={{ fontSize: 10, color: isTop ? "#c9a84c" : "#5a5a3a", textAlign: "right", marginTop: 2 }}>
-                      {p.score} pts
+                      {p.score} {t("matches.pts")}
                     </div>
                   </div>
                 </div>
@@ -108,7 +111,7 @@ export default function MatchesScreen({ matches, profile, onChallenge, onBack }:
                   fontFamily: "'Courier New', monospace",
                   transition: "all 0.2s",
                 }}>
-                  DÉFIER →
+                  {t("matches.challenge")}
                 </button>
               </div>
             </div>
@@ -117,7 +120,7 @@ export default function MatchesScreen({ matches, profile, onChallenge, onBack }:
       </div>
 
       <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-start" }}>
-        <ActionButton secondary onClick={onBack}>← MODIFIER DISPONIBILITÉS</ActionButton>
+        <ActionButton secondary onClick={onBack}>{t("matches.back")}</ActionButton>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { inputStyle } from "../../styles";
 import SectionTitle from "../ui/SectionTitle";
 import Label from "../ui/Label";
@@ -10,14 +11,15 @@ interface Props {
 }
 
 export default function AuthScreen({ onSendCode }: Props) {
+  const { t } = useTranslation();
   const [pseudo, setPseudo] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    if (!pseudo.trim()) { setError("Entrez votre pseudo de commandant"); return; }
-    if (!email.trim() || !email.includes("@")) { setError("Entrez un email valide"); return; }
+    if (!pseudo.trim()) { setError(t("auth.errorPseudo")); return; }
+    if (!email.trim() || !email.includes("@")) { setError(t("auth.errorEmail")); return; }
     setError(null);
     setLoading(true);
     const err = await onSendCode(pseudo.trim(), email.trim().toLowerCase());
@@ -27,34 +29,34 @@ export default function AuthScreen({ onSendCode }: Props) {
 
   return (
     <div style={{ animation: "fadeIn 0.3s ease", maxWidth: 480, margin: "80px auto 0" }}>
-      <SectionTitle>ACCÈS AU SYSTÈME</SectionTitle>
+      <SectionTitle>{t("auth.title")}</SectionTitle>
 
       <form
         onSubmit={e => { e.preventDefault(); handleSubmit(); }}
         style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 20 }}
       >
         <div>
-          <Label>PSEUDO DE COMMANDANT</Label>
+          <Label>{t("auth.pseudoLabel")}</Label>
           <input
             name="username"
             autoComplete="username"
             value={pseudo}
             onChange={e => setPseudo(e.target.value)}
-            placeholder="Ex: Général Moreau..."
+            placeholder={t("auth.pseudoPlaceholder")}
             style={inputStyle}
             autoFocus
             disabled={loading}
           />
         </div>
         <div>
-          <Label>EMAIL DE CONTACT</Label>
+          <Label>{t("auth.emailLabel")}</Label>
           <input
             name="email"
             type="email"
             autoComplete="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            placeholder="commandant@example.com"
+            placeholder={t("auth.emailPlaceholder")}
             style={inputStyle}
             disabled={loading}
           />
@@ -66,13 +68,13 @@ export default function AuthScreen({ onSendCode }: Props) {
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
           <ActionButton onClick={handleSubmit}>
-            {loading ? "ENVOI…" : "ENVOYER LE CODE →"}
+            {loading ? t("auth.submitting") : t("auth.submit")}
           </ActionButton>
         </div>
       </form>
 
       <div style={{ marginTop: 48, fontSize: 10, color: "#2a2a1a", letterSpacing: 1, textAlign: "center" }}>
-        Un code à usage unique sera envoyé à votre adresse email.
+        {t("auth.hint")}
       </div>
     </div>
   );

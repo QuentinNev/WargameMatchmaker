@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { inputStyle } from "../../styles";
 import SectionTitle from "../ui/SectionTitle";
 import Label from "../ui/Label";
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function VerifyScreen({ email, onVerify, onBack, onResend }: Props) {
+  const { t } = useTranslation();
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -50,7 +52,7 @@ export default function VerifyScreen({ email, onVerify, onBack, onResend }: Prop
 
   const handleSubmit = async () => {
     const code = digits.join("");
-    if (code.length < 6) { setError("Entrez les 6 chiffres du code"); return; }
+    if (code.length < 6) { setError(t("verify.errorDigits")); return; }
     setLoading(true);
     setError(null);
     const err = await onVerify(code);
@@ -65,14 +67,14 @@ export default function VerifyScreen({ email, onVerify, onBack, onResend }: Prop
 
   return (
     <div style={{ animation: "fadeIn 0.3s ease", maxWidth: 480, margin: "80px auto 0" }}>
-      <SectionTitle>VÉRIFICATION D'IDENTITÉ</SectionTitle>
+      <SectionTitle>{t("verify.title")}</SectionTitle>
 
       <div style={{ marginTop: 24, fontSize: 12, color: "#5a5a3a", letterSpacing: 1 }}>
-        Code envoyé à <span style={{ color: "#c9b99a" }}>{email}</span>
+        {t("verify.codeSentTo")} <span style={{ color: "#c9b99a" }}>{email}</span>
       </div>
 
       <div style={{ marginTop: 28 }}>
-        <Label>CODE DE VÉRIFICATION</Label>
+        <Label>{t("verify.codeLabel")}</Label>
         <div style={{ display: "flex", gap: 8 }} onPaste={handlePaste}>
           {digits.map((d, i) => (
             <input
@@ -101,17 +103,17 @@ export default function VerifyScreen({ email, onVerify, onBack, onResend }: Prop
 
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 28, alignItems: "center" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <ActionButton secondary onClick={onBack}>← MODIFIER L'EMAIL</ActionButton>
+          <ActionButton secondary onClick={onBack}>{t("verify.back")}</ActionButton>
           <button onClick={onResend} style={{
             background: "transparent", border: "none", color: "#3a3a2a",
             cursor: "pointer", fontSize: 10, letterSpacing: 2,
             fontFamily: "'Courier New', monospace", textAlign: "left", padding: 0,
           }}>
-            RENVOYER LE CODE
+            {t("verify.resend")}
           </button>
         </div>
         <ActionButton onClick={handleSubmit}>
-          {loading ? "VALIDATION…" : "VALIDER →"}
+          {loading ? t("verify.validating") : t("verify.submit")}
         </ActionButton>
       </div>
     </div>

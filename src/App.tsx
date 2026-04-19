@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { Availability, MatchResult, Profile, Screen, User } from "./types";
 import { MOCK_PLAYERS } from "./constants";
 import { computeMatchScore } from "./utils";
@@ -11,16 +12,11 @@ import MatchesScreen from "./components/screens/MatchesScreen";
 import ChallengeScreen from "./components/screens/ChallengeScreen";
 
 interface HoverCell { d: string; s: number }
-interface NavItem { key: Screen; label: string }
 interface PendingAuth { pseudo: string; email: string }
 
-const NAV_ITEMS: NavItem[] = [
-  { key: "profile", label: "PROFIL" },
-  { key: "availability", label: "DISPO" },
-  { key: "matches", label: "MATCHS" },
-];
-
 export default function App() {
+  const { t, i18n } = useTranslation();
+
   const [screen, setScreen] = useState<Screen>("auth");
   const [user, setUser] = useState<User | null>(null);
   // pendingAuth holds pseudo + email between AuthScreen and VerifyScreen.
@@ -67,6 +63,11 @@ export default function App() {
     setTimeout(() => setToast(null), 2500);
   };
 
+  const switchLanguage = (lang: string) => {
+    i18n.changeLanguage(lang);
+    localStorage.setItem("lang", lang);
+  };
+
   // ── Auth handlers ──────────────────────────────────────────────────────────
 
   const handleSendCode = async (pseudo: string, email: string): Promise<string | null> => {
@@ -86,13 +87,13 @@ export default function App() {
   };
 
   const handleVerify = async (code: string): Promise<string | null> => {
-    if (!pendingAuth) return "Erreur inattendue, recommencez";
+    if (!pendingAuth) return t("toast.unexpectedError");
     const { error } = await supabase.auth.verifyOtp({
       email: pendingAuth.email,
       token: code,
       type: "email",
     });
-    if (error) return "Code incorrect ou expiré";
+    if (error) return t("toast.invalidCode");
 
     const u: User = { pseudo: pendingAuth.pseudo, email: pendingAuth.email };
     setUser(u);
@@ -108,7 +109,7 @@ export default function App() {
       email: pendingAuth.email,
       options: { data: { pseudo: pendingAuth.pseudo }, shouldCreateUser: true },
     }).then(({ error }) => {
-      showToast(error ? `Erreur : ${error.message}` : "Nouveau code envoyé");
+      showToast(error ? `Error: ${error.message}` : t("toast.codeSent"));
     });
   };
 
@@ -168,6 +169,12 @@ export default function App() {
 
   const isAuthScreen = screen === "auth" || screen === "verify";
 
+  const navItems = [
+    { key: "profile" as Screen, label: t("nav.profile") },
+    { key: "availability" as Screen, label: t("nav.availability") },
+    { key: "matches" as Screen, label: t("nav.matches") },
+  ];
+
   return (
     <div style={{
       minHeight: "100vh",
@@ -221,42 +228,58 @@ export default function App() {
               WARGAME MATCHMAKER
             </div>
             <div style={{ fontSize: 10, color: "#5a5a3a", letterSpacing: 3 }}>
-              SYSTÈME DE COORDINATION TACTIQUE v2.4
+              {t("app.subtitle")}
             </div>
           </div>
         </div>
 
-        {/* Nav — hidden on auth/verify screens */}
-        {!isAuthScreen && (
-          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-            {NAV_ITEMS.map(({ key, label }) => (
-              <button key={key}
-                onClick={() => key !== "matches" ? setScreen(key) : (matches.length ? setScreen(key) : null)}
-                style={{
-                  background: screen === key ? "#2a2a0a" : "transparent",
-                  border: `1px solid ${screen === key ? "#c9a84c" : "#2a2a1a"}`,
-                  color: screen === key ? "#c9a84c" : "#5a5a3a",
-                  padding: "6px 16px", cursor: "pointer", fontSize: 11,
-                  letterSpacing: 2, transition: "all 0.2s",
-                  opacity: key === "matches" && !matches.length ? 0.3 : 1,
-                }}>
-                {label}
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          {/* Nav — hidden on auth/verify screens */}
+          {!isAuthScreen && (
+            <>
+              {navItems.map(({ key, label }) => (
+                <button key={key}
+                  onClick={() => key !== "matches" ? setScreen(key) : (matches.length ? setScreen(key) : null)}
+                  style={{
+                    background: screen === key ? "#2a2a0a" : "transparent",
+                    border: `1px solid ${screen === key ? "#c9a84c" : "#2a2a1a"}`,
+                    color: screen === key ? "#c9a84c" : "#5a5a3a",
+                    padding: "6px 16px", cursor: "pointer", fontSize: 11,
+                    letterSpacing: 2, transition: "all 0.2s",
+                    opacity: key === "matches" && !matches.length ? 0.3 : 1,
+                  }}>
+                  {label}
+                </button>
+              ))}
+              <div style={{ width: 1, height: 20, background: "#2a2a1a", margin: "0 8px" }} />
+              <div style={{ fontSize: 10, color: "#4a4a3a", letterSpacing: 1 }}>
+                {user?.pseudo}
+              </div>
+              <button onClick={handleLogout} style={{
+                background: "transparent", border: "1px solid #2a2a1a",
+                color: "#3a3a2a", padding: "4px 10px", cursor: "pointer",
+                fontSize: 10, letterSpacing: 2, fontFamily: "'Courier New', monospace",
+                marginLeft: 4,
+              }}>
+                {t("nav.logout")}
               </button>
-            ))}
-            <div style={{ width: 1, height: 20, background: "#2a2a1a", margin: "0 8px" }} />
-            <div style={{ fontSize: 10, color: "#4a4a3a", letterSpacing: 1 }}>
-              {user?.pseudo}
-            </div>
-            <button onClick={handleLogout} style={{
-              background: "transparent", border: "1px solid #2a2a1a",
-              color: "#3a3a2a", padding: "4px 10px", cursor: "pointer",
-              fontSize: 10, letterSpacing: 2, fontFamily: "'Courier New', monospace",
-              marginLeft: 4,
+              <div style={{ width: 1, height: 20, background: "#2a2a1a", margin: "0 4px" }} />
+            </>
+          )}
+
+          {/* Language switcher — always visible */}
+          {(["fr", "en"] as const).map(lang => (
+            <button key={lang} onClick={() => switchLanguage(lang)} style={{
+              background: i18n.language === lang ? "#2a2a0a" : "transparent",
+              border: `1px solid ${i18n.language === lang ? "#c9a84c" : "#2a2a1a"}`,
+              color: i18n.language === lang ? "#c9a84c" : "#3a3a2a",
+              padding: "4px 8px", cursor: "pointer",
+              fontSize: 10, letterSpacing: 1, fontFamily: "'Courier New', monospace",
             }}>
-              DÉCONNEXION
+              {lang.toUpperCase()}
             </button>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
 
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px" }}>

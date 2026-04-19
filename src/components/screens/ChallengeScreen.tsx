@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Availability, MatchResult, Profile } from "../../types";
 import { TIME_SLOTS } from "../../constants";
 import { inputStyle } from "../../styles";
@@ -18,7 +19,9 @@ interface Props {
 }
 
 export default function ChallengeScreen({ challenged, profile, availability, showToast, onBack, onSent }: Props) {
+  const { t, i18n } = useTranslation();
   const [message, setMessage] = useState("");
+  const locale = i18n.language === "fr" ? "fr-FR" : "en-US";
 
   // Find dates where both players have at least one common slot, sorted chronologically.
   const commonSlotsByDate = Object.keys(availability)
@@ -32,19 +35,19 @@ export default function ChallengeScreen({ challenged, profile, availability, sho
 
   return (
     <div style={{ animation: "fadeIn 0.3s ease" }}>
-      <SectionTitle>ENVOYER UN DÉFI</SectionTitle>
+      <SectionTitle>{t("challenge.title")}</SectionTitle>
 
       <div style={{ marginTop: 24, padding: 24, border: "1px solid #c9a84c", background: "rgba(201,168,76,0.03)" }}>
-        <div style={{ fontSize: 12, color: "#5a5a3a", letterSpacing: 2, marginBottom: 16 }}>ORDRE DE BATAILLE</div>
+        <div style={{ fontSize: 12, color: "#5a5a3a", letterSpacing: 2, marginBottom: 16 }}>{t("challenge.battleOrder")}</div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16, alignItems: "center", marginBottom: 24 }}>
-          <PlayerCard name={profile.name || "Vous"} rank={profile.rank} you />
+          <PlayerCard name={profile.name || t("playerCard.you")} rank={profile.rank} you />
           <div style={{ fontSize: 24, color: "#c9a84c", textAlign: "center" }}>⚔</div>
           <PlayerCard name={challenged.name} rank={challenged.rank} />
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 11, color: "#4a4a3a", letterSpacing: 2, marginBottom: 8 }}>CRÉNEAUX COMMUNS</div>
+          <div style={{ fontSize: 11, color: "#4a4a3a", letterSpacing: 2, marginBottom: 8 }}>{t("challenge.commonSlots")}</div>
           {commonSlotsByDate.length > 0 ? (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {commonSlotsByDate.map(({ dateKey, slot }) => (
@@ -53,32 +56,32 @@ export default function ChallengeScreen({ challenged, profile, availability, sho
                   border: "1px solid #3a5a3a", color: "#7aca7a",
                   background: "rgba(74,138,74,0.1)", letterSpacing: 1,
                 }}>
-                  {formatDateKey(dateKey)} {TIME_SLOTS[slot]}
+                  {formatDateKey(dateKey, locale)} {TIME_SLOTS[slot]}
                 </span>
               ))}
             </div>
           ) : (
             <div style={{ fontSize: 11, color: "#5a3a3a" }}>
-              ⚠ Aucun créneau commun — proposer une date manuelle
+              {t("challenge.noCommonSlots")}
             </div>
           )}
         </div>
 
-        <Label>MESSAGE TACTIQUE (OPTIONNEL)</Label>
+        <Label>{t("challenge.messageLabel")}</Label>
         <textarea
           value={message}
           onChange={e => setMessage(e.target.value)}
-          placeholder="Je vous propose une bataille d'encerclement sur la carte de Normandie..."
+          placeholder={t("challenge.messagePlaceholder")}
           style={{ ...inputStyle, height: 80, resize: "vertical" }}
         />
 
         <div style={{ display: "flex", gap: 12, marginTop: 20, justifyContent: "flex-end" }}>
-          <ActionButton secondary onClick={onBack}>← ANNULER</ActionButton>
+          <ActionButton secondary onClick={onBack}>{t("challenge.cancel")}</ActionButton>
           <ActionButton onClick={() => {
-            showToast(`Défi envoyé à ${challenged.name} !`);
+            showToast(t("toast.challengeSent", { name: challenged.name }));
             setTimeout(onSent, 300);
           }}>
-            ⚔ ENVOYER LE DÉFI
+            {t("challenge.send")}
           </ActionButton>
         </div>
       </div>
