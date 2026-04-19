@@ -1,15 +1,19 @@
 import { useState, useEffect } from "react";
-import type { Availability, MatchResult, Profile, Screen } from "./types";
+import type { Availability, MatchResult, Profile, Screen, User } from "./types";
 import { MOCK_PLAYERS } from "./constants";
 import { computeMatchScore } from "./utils";
+import AuthScreen from "./components/screens/AuthScreen";
+import VerifyScreen from "./components/screens/VerifyScreen";
 import ProfileScreen from "./components/screens/ProfileScreen";
 import AvailabilityScreen from "./components/screens/AvailabilityScreen";
 import MatchesScreen from "./components/screens/MatchesScreen";
 import ChallengeScreen from "./components/screens/ChallengeScreen";
 
-interface HoverCell { d: string; s: number }
+const LS_USER_KEY = "wgm_user";
 
+interface HoverCell { d: string; s: number }
 interface NavItem { key: Screen; label: string }
+interface PendingAuth { pseudo: string; email: string; code: string }
 
 const NAV_ITEMS: NavItem[] = [
   { key: "profile", label: "PROFIL" },
@@ -17,8 +21,16 @@ const NAV_ITEMS: NavItem[] = [
   { key: "matches", label: "MATCHS" },
 ];
 
+function generateCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 export default function App() {
-  const [screen, setScreen] = useState<Screen>("profile");
+  const [screen, setScreen] = useState<Screen>("auth");
+  const [user, setUser] = useState<User | null>(null);
+  // pendingAuth holds the pseudo, email, and expected code during the verify step.
+  const [pendingAuth, setPendingAuth] = useState<PendingAuth | null>(null);
+
   const [profile, setProfile] = useState<Profile>({ name: "", rank: "Recrue", gameTypes: [] });
   const [availability, setAvailability] = useState<Availability>({});
   const [matches, setMatches] = useState<MatchResult[]>([]);
@@ -30,10 +42,58 @@ export default function App() {
   // so moving over already-toggled cells mid-drag doesn't flip them back.
   const [dragValue, setDragValue] = useState<boolean | undefined>(undefined);
 
+  // Restore session from localStorage on first load.
+  useEffect(() => {
+    const saved = localStorage.getItem(LS_USER_KEY);
+    if (saved) {
+      const u: User = JSON.parse(saved);
+      setUser(u);
+      setProfile(p => ({ ...p, name: u.pseudo }));
+      setScreen("profile");
+    }
+  }, []);
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
   };
+
+  // ── Auth handlers ──────────────────────────────────────────────────────────
+
+  const handleSendCode = (pseudo: string, email: string) => {
+    setPendingAuth({ pseudo, email, code: generateCode() });
+    setScreen("verify");
+  };
+
+  const handleVerify = (entered: string): boolean => {
+    if (!pendingAuth || entered !== pendingAuth.code) return false;
+    const u: User = { pseudo: pendingAuth.pseudo, email: pendingAuth.email };
+    localStorage.setItem(LS_USER_KEY, JSON.stringify(u));
+    setUser(u);
+    // Pre-fill the profile name with the pseudo from registration.
+    setProfile(p => ({ ...p, name: u.pseudo }));
+    setPendingAuth(null);
+    setScreen("profile");
+    return true;
+  };
+
+  const handleResend = () => {
+    if (!pendingAuth) return;
+    setPendingAuth(p => p ? { ...p, code: generateCode() } : null);
+    showToast("Nouveau code généré");
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem(LS_USER_KEY);
+    setUser(null);
+    setProfile({ name: "", rank: "Recrue", gameTypes: [] });
+    setAvailability({});
+    setMatches([]);
+    setChallenged(null);
+    setScreen("auth");
+  };
+
+  // ── Availability handlers ──────────────────────────────────────────────────
 
   // forceVal is passed during drag so all cells in a gesture follow the same
   // add/remove intent decided on mousedown. Without it a single click just toggles.
@@ -81,6 +141,8 @@ export default function App() {
   };
 
   const totalSlots = Object.values(availability).reduce((s, v) => s + (v?.length ?? 0), 0);
+
+  const isAuthScreen = screen === "auth" || screen === "verify";
 
   return (
     <div style={{
@@ -139,25 +201,53 @@ export default function App() {
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 4 }}>
-          {NAV_ITEMS.map(({ key, label }) => (
-            <button key={key}
-              onClick={() => key !== "matches" ? setScreen(key) : (matches.length ? setScreen(key) : null)}
-              style={{
-                background: screen === key ? "#2a2a0a" : "transparent",
-                border: `1px solid ${screen === key ? "#c9a84c" : "#2a2a1a"}`,
-                color: screen === key ? "#c9a84c" : "#5a5a3a",
-                padding: "6px 16px", cursor: "pointer", fontSize: 11,
-                letterSpacing: 2, transition: "all 0.2s",
-                opacity: key === "matches" && !matches.length ? 0.3 : 1,
-              }}>
-              {label}
+
+        {/* Nav — hidden on auth/verify screens */}
+        {!isAuthScreen && (
+          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            {NAV_ITEMS.map(({ key, label }) => (
+              <button key={key}
+                onClick={() => key !== "matches" ? setScreen(key) : (matches.length ? setScreen(key) : null)}
+                style={{
+                  background: screen === key ? "#2a2a0a" : "transparent",
+                  border: `1px solid ${screen === key ? "#c9a84c" : "#2a2a1a"}`,
+                  color: screen === key ? "#c9a84c" : "#5a5a3a",
+                  padding: "6px 16px", cursor: "pointer", fontSize: 11,
+                  letterSpacing: 2, transition: "all 0.2s",
+                  opacity: key === "matches" && !matches.length ? 0.3 : 1,
+                }}>
+                {label}
+              </button>
+            ))}
+            <div style={{ width: 1, height: 20, background: "#2a2a1a", margin: "0 8px" }} />
+            <div style={{ fontSize: 10, color: "#4a4a3a", letterSpacing: 1 }}>
+              {user?.pseudo}
+            </div>
+            <button onClick={handleLogout} style={{
+              background: "transparent", border: "1px solid #2a2a1a",
+              color: "#3a3a2a", padding: "4px 10px", cursor: "pointer",
+              fontSize: 10, letterSpacing: 2, fontFamily: "'Courier New', monospace",
+              marginLeft: 4,
+            }}>
+              DÉCONNEXION
             </button>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
 
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px" }}>
+        {screen === "auth" && (
+          <AuthScreen onSendCode={handleSendCode} />
+        )}
+        {screen === "verify" && pendingAuth && (
+          <VerifyScreen
+            email={pendingAuth.email}
+            demoCode={pendingAuth.code}
+            onVerify={handleVerify}
+            onBack={() => setScreen("auth")}
+            onResend={handleResend}
+          />
+        )}
         {screen === "profile" && (
           <ProfileScreen
             profile={profile}

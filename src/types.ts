@@ -1,6 +1,6 @@
 export type GameTypeId = "40k" | "AoS";
 
-export type Screen = "profile" | "availability" | "matches" | "challenge";
+export type Screen = "auth" | "verify" | "profile" | "availability" | "matches" | "challenge";
 
 // Keys are ISO date strings ("2026-04-22"), values are time-slot indices.
 // Partial because dates with no selection are simply absent from the object.
@@ -33,4 +33,9 @@ export interface MatchResult extends Player {
   overlap: number;
   gameOverlap: number;
   score: number;
+}
+
+export interface User {
+  pseudo: string;
+  email: string;
 }
