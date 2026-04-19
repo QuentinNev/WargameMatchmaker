@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import type { Availability, MatchResult, Profile, Screen, User } from "./types";
 import { MOCK_PLAYERS } from "./constants";
 import { computeMatchScore } from "./utils";
+import { supabase } from "./lib/supabase";
 import AuthScreen from "./components/screens/AuthScreen";
 import VerifyScreen from "./components/screens/VerifyScreen";
 import ProfileScreen from "./components/screens/ProfileScreen";
@@ -9,11 +10,9 @@ import AvailabilityScreen from "./components/screens/AvailabilityScreen";
 import MatchesScreen from "./components/screens/MatchesScreen";
 import ChallengeScreen from "./components/screens/ChallengeScreen";
 
-const LS_USER_KEY = "wgm_user";
-
 interface HoverCell { d: string; s: number }
 interface NavItem { key: Screen; label: string }
-interface PendingAuth { pseudo: string; email: string; code: string }
+interface PendingAuth { pseudo: string; email: string }
 
 const NAV_ITEMS: NavItem[] = [
   { key: "profile", label: "PROFIL" },
@@ -21,14 +20,10 @@ const NAV_ITEMS: NavItem[] = [
   { key: "matches", label: "MATCHS" },
 ];
 
-function generateCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
 export default function App() {
   const [screen, setScreen] = useState<Screen>("auth");
   const [user, setUser] = useState<User | null>(null);
-  // pendingAuth holds the pseudo, email, and expected code during the verify step.
+  // pendingAuth holds pseudo + email between AuthScreen and VerifyScreen.
   const [pendingAuth, setPendingAuth] = useState<PendingAuth | null>(null);
 
   const [profile, setProfile] = useState<Profile>({ name: "", rank: "Recrue", gameTypes: [] });
@@ -42,15 +37,29 @@ export default function App() {
   // so moving over already-toggled cells mid-drag doesn't flip them back.
   const [dragValue, setDragValue] = useState<boolean | undefined>(undefined);
 
-  // Restore session from localStorage on first load.
+  // Restore Supabase session on page load, and listen for sign-out.
   useEffect(() => {
-    const saved = localStorage.getItem(LS_USER_KEY);
-    if (saved) {
-      const u: User = JSON.parse(saved);
-      setUser(u);
-      setProfile(p => ({ ...p, name: u.pseudo }));
-      setScreen("profile");
-    }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const pseudo = (session.user.user_metadata?.pseudo as string | undefined) ?? session.user.email ?? "";
+        const u: User = { pseudo, email: session.user.email! };
+        setUser(u);
+        setProfile(p => ({ ...p, name: pseudo }));
+        setScreen("profile");
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        setUser(null);
+        setProfile({ name: "", rank: "Recrue", gameTypes: [] });
+        setAvailability({});
+        setMatches([]);
+        setChallenged(null);
+        setScreen("auth");
+      }
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   const showToast = (msg: string) => {
@@ -60,37 +69,52 @@ export default function App() {
 
   // ── Auth handlers ──────────────────────────────────────────────────────────
 
-  const handleSendCode = (pseudo: string, email: string) => {
-    setPendingAuth({ pseudo, email, code: generateCode() });
+  const handleSendCode = async (pseudo: string, email: string): Promise<string | null> => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        // pseudo stored in user_metadata so it survives across sessions.
+        data: { pseudo },
+        // Don't redirect — we handle the OTP verification ourselves.
+        shouldCreateUser: true,
+      },
+    });
+    if (error) return error.message;
+    setPendingAuth({ pseudo, email });
     setScreen("verify");
+    return null;
   };
 
-  const handleVerify = (entered: string): boolean => {
-    if (!pendingAuth || entered !== pendingAuth.code) return false;
+  const handleVerify = async (code: string): Promise<string | null> => {
+    if (!pendingAuth) return "Erreur inattendue, recommencez";
+    const { error } = await supabase.auth.verifyOtp({
+      email: pendingAuth.email,
+      token: code,
+      type: "email",
+    });
+    if (error) return "Code incorrect ou expiré";
+
     const u: User = { pseudo: pendingAuth.pseudo, email: pendingAuth.email };
-    localStorage.setItem(LS_USER_KEY, JSON.stringify(u));
     setUser(u);
-    // Pre-fill the profile name with the pseudo from registration.
-    setProfile(p => ({ ...p, name: u.pseudo }));
+    setProfile(p => ({ ...p, name: pendingAuth.pseudo }));
     setPendingAuth(null);
     setScreen("profile");
-    return true;
+    return null;
   };
 
   const handleResend = () => {
     if (!pendingAuth) return;
-    setPendingAuth(p => p ? { ...p, code: generateCode() } : null);
-    showToast("Nouveau code généré");
+    supabase.auth.signInWithOtp({
+      email: pendingAuth.email,
+      options: { data: { pseudo: pendingAuth.pseudo }, shouldCreateUser: true },
+    }).then(({ error }) => {
+      showToast(error ? `Erreur : ${error.message}` : "Nouveau code envoyé");
+    });
   };
 
   const handleLogout = () => {
-    localStorage.removeItem(LS_USER_KEY);
-    setUser(null);
-    setProfile({ name: "", rank: "Recrue", gameTypes: [] });
-    setAvailability({});
-    setMatches([]);
-    setChallenged(null);
-    setScreen("auth");
+    // onAuthStateChange('SIGNED_OUT') handles the state reset above.
+    supabase.auth.signOut();
   };
 
   // ── Availability handlers ──────────────────────────────────────────────────
@@ -242,7 +266,6 @@ export default function App() {
         {screen === "verify" && pendingAuth && (
           <VerifyScreen
             email={pendingAuth.email}
-            demoCode={pendingAuth.code}
             onVerify={handleVerify}
             onBack={() => setScreen("auth")}
             onResend={handleResend}

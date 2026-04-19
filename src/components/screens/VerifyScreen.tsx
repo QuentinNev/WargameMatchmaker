@@ -6,17 +6,16 @@ import ActionButton from "../ui/ActionButton";
 
 interface Props {
   email: string;
-  // The actual code — exposed in UI because there is no backend to send emails.
-  // In production, remove demoCode and rely solely on the emailed value.
-  demoCode: string;
-  onVerify: (code: string) => boolean;
+  // Returns an error message on failure, null on success.
+  onVerify: (code: string) => Promise<string | null>;
   onBack: () => void;
   onResend: () => void;
 }
 
-export default function VerifyScreen({ email, demoCode, onVerify, onBack, onResend }: Props) {
+export default function VerifyScreen({ email, onVerify, onBack, onResend }: Props) {
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const refs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Auto-focus first box on mount.
@@ -49,15 +48,19 @@ export default function VerifyScreen({ email, demoCode, onVerify, onBack, onRese
     refs.current[Math.min(text.length, 5)]?.focus();
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const code = digits.join("");
     if (code.length < 6) { setError("Entrez les 6 chiffres du code"); return; }
-    const ok = onVerify(code);
-    if (!ok) {
-      setError("Code incorrect. Vérifiez et réessayez.");
+    setLoading(true);
+    setError(null);
+    const err = await onVerify(code);
+    setLoading(false);
+    if (err) {
+      setError(err);
       setDigits(["", "", "", "", "", ""]);
       refs.current[0]?.focus();
     }
+    // On success App.tsx handles navigation — no need to do anything here.
   };
 
   return (
@@ -66,26 +69,6 @@ export default function VerifyScreen({ email, demoCode, onVerify, onBack, onRese
 
       <div style={{ marginTop: 24, fontSize: 12, color: "#5a5a3a", letterSpacing: 1 }}>
         Code envoyé à <span style={{ color: "#c9b99a" }}>{email}</span>
-      </div>
-
-      {/* Demo callout — remove this block once a real email service is wired up. */}
-      <div style={{
-        marginTop: 20, padding: "14px 18px",
-        border: "1px solid #3a2a0a", background: "rgba(201,140,20,0.06)",
-      }}>
-        <div style={{ fontSize: 9, color: "#c9a84c", letterSpacing: 3, marginBottom: 8 }}>
-          ⚠ MODE DÉMO — AUCUN EMAIL ENVOYÉ
-        </div>
-        <div style={{ fontSize: 11, color: "#5a5a3a", marginBottom: 12 }}>
-          En production ce code serait envoyé par email. Pour tester, utilisez le code ci-dessous :
-        </div>
-        <div style={{
-          fontSize: 28, letterSpacing: 10, color: "#c9a84c", textAlign: "center",
-          padding: "8px 0", border: "1px solid #3a2a0a", background: "#0a0c08",
-          fontWeight: "bold",
-        }}>
-          {demoCode}
-        </div>
       </div>
 
       <div style={{ marginTop: 28 }}>
@@ -101,6 +84,7 @@ export default function VerifyScreen({ email, demoCode, onVerify, onBack, onRese
               value={d}
               onChange={e => handleChange(i, e.target.value)}
               onKeyDown={e => handleKeyDown(i, e)}
+              disabled={loading}
               style={{
                 ...inputStyle,
                 width: 44, textAlign: "center",
@@ -126,7 +110,9 @@ export default function VerifyScreen({ email, demoCode, onVerify, onBack, onRese
             RENVOYER LE CODE
           </button>
         </div>
-        <ActionButton onClick={handleSubmit}>VALIDER →</ActionButton>
+        <ActionButton onClick={handleSubmit}>
+          {loading ? "VALIDATION…" : "VALIDER →"}
+        </ActionButton>
       </div>
     </div>
   );

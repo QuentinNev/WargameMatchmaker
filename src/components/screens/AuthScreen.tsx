@@ -5,19 +5,24 @@ import Label from "../ui/Label";
 import ActionButton from "../ui/ActionButton";
 
 interface Props {
-  onSendCode: (pseudo: string, email: string) => void;
+  // Returns an error message on failure, null on success.
+  onSendCode: (pseudo: string, email: string) => Promise<string | null>;
 }
 
 export default function AuthScreen({ onSendCode }: Props) {
   const [pseudo, setPseudo] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!pseudo.trim()) { setError("Entrez votre pseudo de commandant"); return; }
     if (!email.trim() || !email.includes("@")) { setError("Entrez un email valide"); return; }
     setError(null);
-    onSendCode(pseudo.trim(), email.trim().toLowerCase());
+    setLoading(true);
+    const err = await onSendCode(pseudo.trim(), email.trim().toLowerCase());
+    setLoading(false);
+    if (err) setError(err);
   };
 
   return (
@@ -34,6 +39,7 @@ export default function AuthScreen({ onSendCode }: Props) {
             placeholder="Ex: Général Moreau..."
             style={inputStyle}
             autoFocus
+            disabled={loading}
           />
         </div>
         <div>
@@ -45,6 +51,7 @@ export default function AuthScreen({ onSendCode }: Props) {
             onKeyDown={e => e.key === "Enter" && handleSubmit()}
             placeholder="commandant@example.com"
             style={inputStyle}
+            disabled={loading}
           />
         </div>
 
@@ -54,7 +61,7 @@ export default function AuthScreen({ onSendCode }: Props) {
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
           <ActionButton onClick={handleSubmit}>
-            ENVOYER LE CODE →
+            {loading ? "ENVOI…" : "ENVOYER LE CODE →"}
           </ActionButton>
         </div>
       </div>
