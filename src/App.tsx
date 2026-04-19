@@ -252,7 +252,6 @@ export default function App() {
           <ProfileScreen
             profile={profile}
             setProfile={setProfile}
-            showToast={showToast}
             onNext={() => setScreen("availability")}
           />
         )}

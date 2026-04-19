@@ -9,11 +9,10 @@ import ActionButton from "../ui/ActionButton";
 interface Props {
   profile: Profile;
   setProfile: Dispatch<SetStateAction<Profile>>;
-  showToast: (msg: string) => void;
   onNext: () => void;
 }
 
-export default function ProfileScreen({ profile, setProfile, showToast, onNext }: Props) {
+export default function ProfileScreen({ profile, setProfile, onNext }: Props) {
   return (
     <div style={{ animation: "fadeIn 0.3s ease" }}>
       <SectionTitle>IDENTIFICATION DU COMMANDANT</SectionTitle>
@@ -21,12 +20,14 @@ export default function ProfileScreen({ profile, setProfile, showToast, onNext }
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, marginTop: 24 }}>
         <div>
           <Label>NOM DE COMMANDANT</Label>
-          <input
-            value={profile.name}
-            onChange={e => setProfile(p => ({ ...p, name: e.target.value }))}
-            placeholder="Ex: Général Moreau..."
-            style={inputStyle}
-          />
+          <div style={{
+            ...inputStyle,
+            color: "#c9a84c",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}>
+            {profile.name}
+            <span style={{ fontSize: 9, color: "#3a3a2a", letterSpacing: 2 }}>COMPTE</span>
+          </div>
 
           <Label style={{ marginTop: 20 }}>GRADE</Label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -78,10 +79,7 @@ export default function ProfileScreen({ profile, setProfile, showToast, onNext }
       </div>
 
       <div style={{ marginTop: 32, display: "flex", justifyContent: "flex-end" }}>
-        <ActionButton onClick={() => {
-          if (!profile.name) { showToast("Entrez votre nom de commandant"); return; }
-          onNext();
-        }}>
+        <ActionButton onClick={onNext}>
           SUIVANT : DISPONIBILITÉS →
         </ActionButton>
       </div>
