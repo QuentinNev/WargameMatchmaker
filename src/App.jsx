@@ -21,6 +21,8 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [hoverCell, setHoverCell] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  // dragValue locks the intended action (add or remove) for the whole drag gesture,
+  // so moving over already-toggled cells mid-drag doesn't flip them back.
   const [dragValue, setDragValue] = useState(null);
 
   const showToast = (msg) => {
@@ -28,6 +30,8 @@ export default function App() {
     setTimeout(() => setToast(null), 2500);
   };
 
+  // forceVal is passed during drag so all cells in a gesture follow the same
+  // add/remove intent decided on mousedown. Without it a single click just toggles.
   const toggleSlot = (day, slot, forceVal) => {
     setAvailability(prev => {
       const daySlots = prev[day] ? [...prev[day]] : [];
@@ -36,6 +40,8 @@ export default function App() {
       if (shouldAdd && idx === -1) daySlots.push(slot);
       else if (!shouldAdd && idx !== -1) daySlots.splice(idx, 1);
       const next = { ...prev };
+      // Drop the key entirely when the day has no slots left, so Object.values()
+      // on availability stays clean and totalSlots counts correctly.
       if (daySlots.length === 0) delete next[day];
       else next[day] = daySlots;
       return next;
@@ -53,6 +59,8 @@ export default function App() {
     if (isDragging) toggleSlot(day, slot, dragValue);
   };
 
+  // Listen on window, not on the table: the user can release the mouse outside
+  // the grid (e.g. on the header) and we still need to end the drag cleanly.
   useEffect(() => {
     const up = () => setIsDragging(false);
     window.addEventListener("mouseup", up);
