@@ -1,10 +1,10 @@
-export type GameTypeId = "40k" |"AoS";
+export type GameTypeId = "40k" | "AoS";
 
 export type Screen = "profile" | "availability" | "matches" | "challenge";
 
-// Keys are day indices (0 = Monday … 6 = Sunday), values are slot indices.
-// Partial because days with no selection are simply absent from the object.
-export type Availability = Partial<Record<number, number[]>>;
+// Keys are ISO date strings ("2026-04-22"), values are time-slot indices.
+// Partial because dates with no selection are simply absent from the object.
+export type Availability = Partial<Record<string, number[]>>;
 
 export interface GameType {
   id: GameTypeId;

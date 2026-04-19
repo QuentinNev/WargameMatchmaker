@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { Availability, MatchResult, Profile } from "../../types";
-import { FULL_DAYS, TIME_SLOTS } from "../../constants";
+import { TIME_SLOTS } from "../../constants";
 import { inputStyle } from "../../styles";
+import { formatDateKey } from "../../utils";
 import SectionTitle from "../ui/SectionTitle";
 import Label from "../ui/Label";
 import ActionButton from "../ui/ActionButton";
@@ -19,6 +20,16 @@ interface Props {
 export default function ChallengeScreen({ challenged, profile, availability, showToast, onBack, onSent }: Props) {
   const [message, setMessage] = useState("");
 
+  // Find dates where both players have at least one common slot, sorted chronologically.
+  const commonSlotsByDate = Object.keys(availability)
+    .sort()
+    .flatMap(dateKey => {
+      const mine = new Set(availability[dateKey] ?? []);
+      const theirs = new Set(challenged.availability[dateKey] ?? []);
+      const common = [...mine].filter(s => theirs.has(s));
+      return common.map(s => ({ dateKey, slot: s }));
+    });
+
   return (
     <div style={{ animation: "fadeIn 0.3s ease" }}>
       <SectionTitle>ENVOYER UN DÉFI</SectionTitle>
@@ -34,23 +45,22 @@ export default function ChallengeScreen({ challenged, profile, availability, sho
 
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 11, color: "#4a4a3a", letterSpacing: 2, marginBottom: 8 }}>CRÉNEAUX COMMUNS</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {FULL_DAYS.map((d, di) => {
-              const mine = new Set(availability[di] ?? []);
-              const theirs = new Set(challenged.availability[di] ?? []);
-              const common = [...mine].filter(s => theirs.has(s));
-              if (common.length === 0) return null;
-              return common.map(s => (
-                <span key={`${di}-${s}`} style={{
+          {commonSlotsByDate.length > 0 ? (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {commonSlotsByDate.map(({ dateKey, slot }) => (
+                <span key={`${dateKey}-${slot}`} style={{
                   fontSize: 10, padding: "3px 10px",
                   border: "1px solid #3a5a3a", color: "#7aca7a",
                   background: "rgba(74,138,74,0.1)", letterSpacing: 1,
-                }}>{d} {TIME_SLOTS[s]}</span>
-              ));
-            })}
-          </div>
-          {challenged.overlap === 0 && (
-            <div style={{ fontSize: 11, color: "#5a3a3a" }}>⚠ Aucun créneau commun — proposer une date manuelle</div>
+                }}>
+                  {formatDateKey(dateKey)} {TIME_SLOTS[slot]}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div style={{ fontSize: 11, color: "#5a3a3a" }}>
+              ⚠ Aucun créneau commun — proposer une date manuelle
+            </div>
           )}
         </div>
 

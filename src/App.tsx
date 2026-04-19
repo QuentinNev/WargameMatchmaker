@@ -7,7 +7,7 @@ import AvailabilityScreen from "./components/screens/AvailabilityScreen";
 import MatchesScreen from "./components/screens/MatchesScreen";
 import ChallengeScreen from "./components/screens/ChallengeScreen";
 
-interface HoverCell { d: number; s: number }
+interface HoverCell { d: string; s: number }
 
 interface NavItem { key: Screen; label: string }
 
@@ -37,7 +37,7 @@ export default function App() {
 
   // forceVal is passed during drag so all cells in a gesture follow the same
   // add/remove intent decided on mousedown. Without it a single click just toggles.
-  const toggleSlot = (day: number, slot: number, forceVal?: boolean) => {
+  const toggleSlot = (day: string, slot: number, forceVal?: boolean) => {
     setAvailability(prev => {
       const daySlots = prev[day] ? [...prev[day]!] : [];
       const idx = daySlots.indexOf(slot);
@@ -53,14 +53,14 @@ export default function App() {
     });
   };
 
-  const handleMouseDown = (day: number, slot: number) => {
+  const handleMouseDown = (day: string, slot: number) => {
     const active = availability[day]?.includes(slot);
     setIsDragging(true);
     setDragValue(!active);
     toggleSlot(day, slot, !active);
   };
 
-  const handleMouseEnter = (day: number, slot: number) => {
+  const handleMouseEnter = (day: string, slot: number) => {
     if (isDragging) toggleSlot(day, slot, dragValue);
   };
 
